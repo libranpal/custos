@@ -34,4 +34,8 @@ public class OAuthException extends RuntimeException {
         public static final String SERVER_ERROR = "server_error";
         public static final String TEMPORARILY_UNAVAILABLE = "temporarily_unavailable";
     }
+
+    public String getErrorCode() {
+        return error;
+    }
 } 
