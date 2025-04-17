@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -91,18 +90,5 @@ public class AuthorizationEndpoint {
                     .state(request.getState())
                     .build());
         }
-    }
-
-    /**
-     * Handles POST requests to the authorization endpoint.
-     * This is used when the client needs to send additional parameters
-     * that shouldn't be exposed in the URL.
-     *
-     * @param request The authorization request parameters
-     * @return ResponseEntity containing the authorization response
-     */
-    @PostMapping
-    public ResponseEntity<AuthorizationResponse> handleAuthorizationRequestPost(AuthorizationRequest request) {
-        return handleAuthorizationRequest(request);
     }
 } 

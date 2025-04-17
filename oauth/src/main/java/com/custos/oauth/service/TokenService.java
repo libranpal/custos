@@ -4,18 +4,29 @@ import com.custos.oauth.exception.OAuthException;
 import com.custos.oauth.model.TokenResponse;
 
 /**
- * Service for handling OAuth token operations.
+ * Service for generating and managing OAuth tokens.
  */
 public interface TokenService {
-
+    
     /**
-     * Generates an authorization code for the authorization code flow.
+     * Generates access and refresh tokens.
+     *
+     * @param clientId The client identifier
+     * @param subject The subject (user ID or client ID)
+     * @param scope The scope of the access token
+     * @return TokenResponse containing the generated tokens
+     * @throws OAuthException if token generation fails
+     */
+    TokenResponse generateTokens(String clientId, String subject, String scope) throws OAuthException;
+    
+    /**
+     * Generates an authorization code.
      *
      * @param clientId The client identifier
      * @param redirectUri The redirect URI
-     * @param scope The requested scope
+     * @param scope The scope of the authorization
      * @return The generated authorization code
-     * @throws OAuthException if token generation fails
+     * @throws OAuthException if code generation fails
      */
     String generateAuthorizationCode(String clientId, String redirectUri, String scope) throws OAuthException;
 
