@@ -1,7 +1,7 @@
 package com.custos.oauth.service;
 
-import com.custos.oauth.client.ClientRegistrationRequest;
-import com.custos.oauth.client.ClientRegistrationResponse;
+import com.custos.oauth.model.ClientRegistrationRequest;
+import com.custos.oauth.model.ClientRegistrationResponse;
 import com.custos.oauth.exception.OAuthException;
 
 /**

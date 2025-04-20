@@ -1,7 +1,7 @@
 package com.custos.oauth.service;
 
-import com.custos.oauth.client.ClientRegistrationRequest;
-import com.custos.oauth.client.ClientRegistrationResponse;
+import com.custos.oauth.model.ClientRegistrationRequest;
+import com.custos.oauth.model.ClientRegistrationResponse;
 import com.custos.oauth.exception.OAuthException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,8 +25,8 @@ class ClientRegistrationServiceTest {
     private static final String TEST_CLIENT_ID = "test-client";
     private static final String TEST_CLIENT_SECRET = "test-secret";
     private static final String TEST_CLIENT_NAME = "Test Client";
-    private static final Set<String> TEST_REDIRECT_URIS = Set.of("https://example.com/callback");
-    private static final Set<String> TEST_GRANT_TYPES = Set.of("authorization_code", "refresh_token");
+    private static final String[] TEST_REDIRECT_URIS = {"https://example.com/callback"};
+    private static final String[] TEST_GRANT_TYPES = {"authorization_code", "refresh_token"};
 
     private ClientRegistrationRequest request;
     private ClientRegistrationResponse response;
