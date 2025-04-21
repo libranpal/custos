@@ -41,6 +41,12 @@ public class TokenRequest {
     private final String code;
     
     /**
+     * The PKCE code verifier.
+     * Required for the authorization code grant type if PKCE was used.
+     */
+    private final String codeVerifier;
+    
+    /**
      * The redirect URI used in the authorization request.
      * Required if the redirect URI was included in the authorization request.
      */

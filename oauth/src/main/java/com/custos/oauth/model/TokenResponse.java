@@ -5,7 +5,7 @@ import lombok.Getter;
 
 /**
  * Represents an OAuth 2.1 token response.
- * This class encapsulates the parameters returned from the token endpoint.
+ * This class encapsulates the response sent by the authorization server to the client.
  */
 @Getter
 @Builder

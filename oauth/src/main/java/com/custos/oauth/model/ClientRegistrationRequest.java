@@ -74,4 +74,9 @@ public class ClientRegistrationRequest {
      * Optional. Unique identifier for the client software.
      */
     private final String softwareId;
+
+    private String clientId;
+    private String clientSecret;
+    private String redirectUri;
+    private String scope;
 } 

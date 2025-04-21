@@ -3,40 +3,40 @@ package com.custos.oauth.grant;
 import com.custos.oauth.exception.OAuthException;
 import com.custos.oauth.model.TokenRequest;
 import com.custos.oauth.model.TokenResponse;
-import com.custos.oauth.service.Authenticator;
 import com.custos.oauth.service.JwtTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Handler for the Password grant type.
- * This grant type is used when the client has the user's credentials.
+ * Handler for the Authorization Code grant type.
+ * This grant type is used in the authorization code flow.
  */
 @Slf4j
 @RequiredArgsConstructor
-public class PasswordGrantHandler implements GrantHandler {
+public class AuthorizationCodeGrantHandler implements GrantHandler {
 
-    private final Authenticator authenticator;
     private final JwtTokenService jwtTokenService;
 
     @Override
     public TokenResponse handle(TokenRequest request) {
-        log.info("Handling password grant request for user: {}", request.getUsername());
+        log.info("Handling authorization code grant request");
         
         try {
-            // Authenticate the user
-            String userId = authenticator.authenticate(request.getUsername(), request.getPassword());
+            // Validate authorization code
+            var claimsSet = jwtTokenService.validateAuthorizationCode(
+                request.getCode(),
+                request.getCodeVerifier()
+            );
             
-            // Validate scope if provided
-            if (request.getScope() != null) {
-                authenticator.validateScope(userId, request.getScope());
-            }
+            // Get user ID and scope from the code
+            String userId = claimsSet.getSubject();
+            String scope = claimsSet.getStringClaim("scope");
             
             // Generate access token
             String accessToken = jwtTokenService.generateAccessToken(
                 request.getClientId(),
                 userId,
-                request.getScope(),
+                scope,
                 3600 // 1 hour
             );
             
@@ -44,7 +44,7 @@ public class PasswordGrantHandler implements GrantHandler {
             String refreshToken = jwtTokenService.generateRefreshToken(
                 request.getClientId(),
                 userId,
-                request.getScope()
+                scope
             );
             
             // Build response
@@ -53,19 +53,19 @@ public class PasswordGrantHandler implements GrantHandler {
                 .tokenType("Bearer")
                 .expiresIn(3600L)
                 .refreshToken(refreshToken)
-                .scope(request.getScope())
+                .scope(scope)
                 .build();
             
         } catch (OAuthException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Failed to handle password grant", e);
-            throw new OAuthException("server_error", "Failed to handle password grant");
+            log.error("Failed to handle authorization code grant", e);
+            throw new OAuthException("server_error", "Failed to handle authorization code grant");
         }
     }
 
     @Override
     public String getGrantType() {
-        return "password";
+        return "authorization_code";
     }
 } 

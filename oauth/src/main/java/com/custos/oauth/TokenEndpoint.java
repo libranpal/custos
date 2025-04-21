@@ -4,11 +4,13 @@ import com.custos.oauth.exception.OAuthException;
 import com.custos.oauth.grant.ClientCredentialsGrantHandler;
 import com.custos.oauth.grant.GrantHandler;
 import com.custos.oauth.grant.PasswordGrantHandler;
+import com.custos.oauth.grant.RefreshTokenGrantHandler;
+import com.custos.oauth.grant.AuthorizationCodeGrantHandler;
 import com.custos.oauth.model.TokenRequest;
 import com.custos.oauth.model.TokenResponse;
 import com.custos.oauth.service.Authenticator;
 import com.custos.oauth.service.ClientRegistrationService;
-import com.custos.oauth.service.TokenService;
+import com.custos.oauth.service.JwtTokenService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,7 +23,7 @@ import java.util.Map;
 
 /**
  * OAuth 2.1 Token Endpoint implementation.
- * Handles token requests and responses according to RFC 6749.
+ * Handles token requests and responses according to RFC 6749 and RFC 9068.
  */
 @Slf4j
 @RestController
@@ -29,7 +31,7 @@ import java.util.Map;
 public class TokenEndpoint {
 
     private final ClientRegistrationService clientRegistrationService;
-    private final TokenService tokenService;
+    private final JwtTokenService jwtTokenService;
     private final Authenticator authenticator;
     
     private final Map<String, GrantHandler> grantHandlers = new HashMap<>();
@@ -38,15 +40,17 @@ public class TokenEndpoint {
      * Initializes the grant handlers.
      */
     public TokenEndpoint(ClientRegistrationService clientRegistrationService,
-                        TokenService tokenService,
+                        JwtTokenService jwtTokenService,
                         Authenticator authenticator) {
         this.clientRegistrationService = clientRegistrationService;
-        this.tokenService = tokenService;
+        this.jwtTokenService = jwtTokenService;
         this.authenticator = authenticator;
         
         // Register grant handlers
-        grantHandlers.put("password", new PasswordGrantHandler(authenticator, tokenService));
-        grantHandlers.put("client_credentials", new ClientCredentialsGrantHandler(clientRegistrationService, tokenService));
+        grantHandlers.put("password", new PasswordGrantHandler(authenticator, jwtTokenService));
+        grantHandlers.put("client_credentials", new ClientCredentialsGrantHandler(clientRegistrationService, jwtTokenService));
+        grantHandlers.put("refresh_token", new RefreshTokenGrantHandler(jwtTokenService));
+        grantHandlers.put("authorization_code", new AuthorizationCodeGrantHandler(jwtTokenService));
     }
 
     /**
