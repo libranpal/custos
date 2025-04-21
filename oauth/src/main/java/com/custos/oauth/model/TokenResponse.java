@@ -1,66 +1,66 @@
 package com.custos.oauth.model;
 
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 
 /**
  * Represents an OAuth 2.1 token response.
  * This class encapsulates the response sent by the authorization server to the client.
  */
-@Getter
+@Data
 @Builder
 public class TokenResponse {
     /**
      * The access token issued by the authorization server.
      * Required for successful responses.
      */
-    private final String accessToken;
+    private String accessToken;
     
     /**
      * The type of the token issued.
      * Required for successful responses. Value is typically "Bearer".
      */
-    private final String tokenType;
+    private String tokenType;
     
     /**
      * The lifetime in seconds of the access token.
      * Required for successful responses.
      */
-    private final Long expiresIn;
+    private Long expiresIn;
     
     /**
      * The refresh token, which can be used to obtain new access tokens.
      * Optional.
      */
-    private final String refreshToken;
+    private String refreshToken;
     
     /**
      * The scope of the access token.
      * Optional.
      */
-    private final String scope;
+    private String scope;
     
     /**
      * The ID token, used in OpenID Connect.
      * Optional.
      */
-    private final String idToken;
+    private String idToken;
     
     /**
      * The error code if the token request failed.
      * Required for error responses.
      */
-    private final String error;
+    private String error;
     
     /**
      * A human-readable description of the error.
      * Optional for error responses.
      */
-    private final String errorDescription;
+    private String errorDescription;
     
     /**
      * A URI identifying a human-readable web page with information about the error.
      * Optional for error responses.
      */
-    private final String errorUri;
+    private String errorUri;
 } 

@@ -27,6 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -64,6 +66,15 @@ public class AuthorizationEndpoint {
         log.info("Received authorization request: {}", request);
         
         try {
+            // Validate required parameters
+            if (request.getClientId() == null || request.getClientId().trim().isEmpty()) {
+                throw new OAuthException("invalid_request", "client_id is required");
+            }
+            
+            if (request.getRedirectUri() == null || request.getRedirectUri().trim().isEmpty()) {
+                throw new OAuthException("invalid_request", "redirect_uri is required");
+            }
+            
             // Validate client
             clientRegistrationService.validateClient(request.getClientId(), request.getRedirectUri());
             
@@ -74,47 +85,37 @@ public class AuthorizationEndpoint {
             }
             
             // Validate scope if provided
-            if (request.getScope() != null) {
+            if (request.getScope() != null && !request.getScope().trim().isEmpty()) {
                 clientRegistrationService.validateScope(request.getClientId(), request.getScope());
             }
             
-            // TODO: Check if user is authenticated (e.g., from session)
-            boolean isAuthenticated = false;
-            String userId = null;
+            // Check if user is authenticated
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAuthenticated = authentication != null && authentication.isAuthenticated();
             
             if (!isAuthenticated) {
-                // Redirect to login page
-                String loginUrl = String.format("/login?client_id=%s&redirect_uri=%s&state=%s&scope=%s",
-                    URLEncoder.encode(request.getClientId(), StandardCharsets.UTF_8),
-                    URLEncoder.encode(request.getRedirectUri(), StandardCharsets.UTF_8),
-                    URLEncoder.encode(request.getState(), StandardCharsets.UTF_8),
-                    URLEncoder.encode(request.getScope(), StandardCharsets.UTF_8));
+                // Build login URL with parameters
+                StringBuilder loginUrl = new StringBuilder("/login?")
+                    .append("client_id=").append(encode(request.getClientId()))
+                    .append("&redirect_uri=").append(encode(request.getRedirectUri()));
+                
+                if (request.getState() != null && !request.getState().trim().isEmpty()) {
+                    loginUrl.append("&state=").append(encode(request.getState()));
+                }
+                
+                if (request.getScope() != null && !request.getScope().trim().isEmpty()) {
+                    loginUrl.append("&scope=").append(encode(request.getScope()));
+                }
                 
                 return ResponseEntity.status(HttpStatus.FOUND)
-                    .header(HttpHeaders.LOCATION, loginUrl)
-                    .build();
-            }
-            
-            // TODO: Check if user has already consented
-            boolean hasConsented = false;
-            
-            if (!hasConsented) {
-                // Redirect to consent page
-                String consentUrl = String.format("/consent?client_id=%s&redirect_uri=%s&state=%s&scope=%s",
-                    URLEncoder.encode(request.getClientId(), StandardCharsets.UTF_8),
-                    URLEncoder.encode(request.getRedirectUri(), StandardCharsets.UTF_8),
-                    URLEncoder.encode(request.getState(), StandardCharsets.UTF_8),
-                    URLEncoder.encode(request.getScope(), StandardCharsets.UTF_8));
-                
-                return ResponseEntity.status(HttpStatus.FOUND)
-                    .header(HttpHeaders.LOCATION, consentUrl)
+                    .header(HttpHeaders.LOCATION, loginUrl.toString())
                     .build();
             }
             
             // Generate authorization code
             String code = jwtTokenService.generateAuthorizationCode(
                 request.getClientId(),
-                userId,
+                authentication.getName(),
                 request.getRedirectUri(),
                 request.getScope(),
                 request.getCodeChallenge(),
@@ -122,29 +123,40 @@ public class AuthorizationEndpoint {
             );
             
             // Build redirect URI with authorization code
-            String redirectUri = String.format("%s?code=%s&state=%s",
-                request.getRedirectUri(),
-                URLEncoder.encode(code, StandardCharsets.UTF_8),
-                URLEncoder.encode(request.getState(), StandardCharsets.UTF_8));
+            StringBuilder redirectUri = new StringBuilder(request.getRedirectUri())
+                .append("?code=").append(encode(code));
+                
+            if (request.getState() != null && !request.getState().trim().isEmpty()) {
+                redirectUri.append("&state=").append(encode(request.getState()));
+            }
             
             return ResponseEntity.status(HttpStatus.FOUND)
-                .header(HttpHeaders.LOCATION, redirectUri)
+                .header(HttpHeaders.LOCATION, redirectUri.toString())
                 .build();
             
         } catch (OAuthException e) {
             log.error("Authorization request failed: {}", e.getMessage());
             
             // Build error redirect URI
-            String redirectUri = String.format("%s?error=%s&error_description=%s&state=%s",
-                request.getRedirectUri(),
-                URLEncoder.encode(e.getErrorCode(), StandardCharsets.UTF_8),
-                URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8),
-                URLEncoder.encode(request.getState(), StandardCharsets.UTF_8));
+            StringBuilder redirectUri = new StringBuilder(request.getRedirectUri())
+                .append("?error=").append(encode(e.getErrorCode()))
+                .append("&error_description=").append(encode(e.getMessage()));
+                
+            if (request.getState() != null && !request.getState().trim().isEmpty()) {
+                redirectUri.append("&state=").append(encode(request.getState()));
+            }
             
             return ResponseEntity.status(HttpStatus.FOUND)
-                .header(HttpHeaders.LOCATION, redirectUri)
+                .header(HttpHeaders.LOCATION, redirectUri.toString())
                 .build();
         }
+    }
+
+    private String encode(String value) {
+        if (value == null) {
+            return "";
+        }
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     /**

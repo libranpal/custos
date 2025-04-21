@@ -6,6 +6,7 @@ import com.custos.oauth.model.TokenResponse;
 import com.custos.oauth.service.JwtTokenService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  * Handler for the Refresh Token grant type.
@@ -13,13 +14,14 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RequiredArgsConstructor
+@Component
 public class RefreshTokenGrantHandler implements GrantHandler {
 
     private final JwtTokenService jwtTokenService;
 
     @Override
     public TokenResponse handle(TokenRequest request) {
-        log.info("Handling refresh token grant request");
+        log.info("Handling refresh token grant for client: {}", request.getClientId());
         
         try {
             // Validate the refresh token
